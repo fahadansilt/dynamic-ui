@@ -33,12 +33,6 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
-
-    route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
-        Route::get('login', [AdminAuthenticatedSessionController::class, 'create'])
-            ->name('login');
-        Route::post('login', [AdminAuthenticatedSessionController::class, 'store']);
-    });
 });
 
 Route::middleware('auth')->group(function () {
@@ -60,4 +54,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+});
+
+route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'guest:admin'], function () {
+    Route::get('login', [AdminAuthenticatedSessionController::class, 'create'])
+        ->name('login');
+    Route::post('login', [AdminAuthenticatedSessionController::class, 'store']);
 });
