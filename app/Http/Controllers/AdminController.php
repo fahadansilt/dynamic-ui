@@ -7,7 +7,6 @@ use App\Http\Requests\ReorderBlockRequest;
 use App\Http\Requests\StoreBlockRequest;
 use App\Http\Requests\ToggleStatusRequest;
 use App\Http\Requests\UpdateBlockRequest;
-use App\Models\ui_blocks;
 use App\Models\UiBlock;
 use App\Services\AdminService;
 use Inertia\Inertia;
@@ -66,7 +65,7 @@ class AdminController extends Controller
     function reorderBlock(ReorderBlockRequest $reorderBlockRequest, UiBlock $uiBlock)
     {
         $success = $this->adminService->reorderBlock($uiBlock, $reorderBlockRequest->validated()['direction']);
-        
+
         $message = $success ? 'Block order updated successfully' : 'Unable to reorder block';
         return redirect()->route('admin.dashboard')->with('success', $message);
     }
