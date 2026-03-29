@@ -1,6 +1,6 @@
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem,NavItem } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { UiBlock } from '@/types/ui-block';
 import { BlockType } from '@/types/block-type';
@@ -12,11 +12,19 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const navItem: NavItem[] = [
+    {
+        title: 'Dashboard',
+        url: route('admin.dashboard'),
+    },
+];
+
 interface prop {
     block: UiBlock,
-    elements: BlockType
+    elements: BlockType,
+    errors: Record<string, string>
 }
-export default function AddBlock({block, elements} : prop) {
+export default function AddBlock({block, elements, errors} : prop) {
     const {data, setData} = useForm({
         title: block?.title || '',
         type: block?.type || 'banner',
@@ -36,7 +44,7 @@ export default function AddBlock({block, elements} : prop) {
 
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} navItem={navItem}>
             <Head title="Add Block" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div
@@ -54,6 +62,9 @@ export default function AddBlock({block, elements} : prop) {
                             onChange={(e) => setData('title', e.target.value)}
                             className="border w-full mb-3 p-2"
                         />
+                        {errors.title && (
+                            <p className="text-red-500 text-sm mb-3">{errors.title}</p>
+                        )}
 
                         <select
                             value={data.type}
@@ -64,6 +75,9 @@ export default function AddBlock({block, elements} : prop) {
                                     <option key={type} value={type}>{type}</option>
                                 ))}
                         </select>
+                        {errors.type && (
+                            <p className="text-red-500 text-sm mb-3">{errors.type}</p>
+                        )}
 
                         <label className="flex items-center gap-2 mb-3">
                             <input
@@ -73,6 +87,9 @@ export default function AddBlock({block, elements} : prop) {
                             />
                             Active
                         </label>
+                        {errors.is_active && (
+                            <p className="text-red-500 text-sm mb-3">{errors.is_active}</p>
+                        )}
 
                         <textarea
                             placeholder="Content (JSON)"
@@ -80,6 +97,9 @@ export default function AddBlock({block, elements} : prop) {
                             onChange={(e) => setData('content', e.target.value)}
                             className="border w-full mb-3 p-2 min-h-[100px]"
                         />
+                        {errors.content && (
+                            <p className="text-red-500 text-sm mb-3">{errors.content}</p>
+                        )}
 
                         <button
                             type="submit"

@@ -3,16 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Constants\ElementConstant;
+use App\Http\Requests\ReorderBlockRequest;
+use App\Http\Requests\StoreBlockRequest;
+use App\Http\Requests\ToggleStatusRequest;
+use App\Http\Requests\UpdateBlockRequest;
 use App\Models\ui_blocks;
 use App\Models\UiBlock;
+use App\Services\AdminService;
 use Inertia\Inertia;
 
 class AdminController extends Controller
 {
+    public function __construct(public AdminService $adminService)
+    {}
+
     public function dashboard()
     {
         return inertia::render('admin/dashboard', [
-            'uiBlocks' => UiBlock::orderBy('order')->get()
+            'uiBlocks' => $this->adminService->getAllBlocks()
         ]);
     }
 
@@ -23,18 +31,9 @@ class AdminController extends Controller
         ]);
     }
 
-    function storeBlock()
+    function storeBlock(StoreBlockRequest $storeBlockRequest)
     {
-        $data = request()->validate([
-            'title' => 'required|string',
-            'type' => 'required|string',
-            'is_active' => 'boolean',
-            'content' => 'required|string'
-        ]);
-
-        $data['content'] = json_decode($data['content'], true);
-        $data['order'] = UiBlock::max('order') + 1;
-        UiBlock::create($data);
+        $this->adminService->storeBlock($storeBlockRequest->validated());
         return to_route('admin.dashboard');
     }
 
@@ -46,59 +45,29 @@ class AdminController extends Controller
         ]);
     }
 
-    function updateBlock(UiBlock $block)
+    function updateBlock(UpdateBlockRequest $updateBlockRequest, UiBlock $block)
     {
-        $data = request()->validate([
-            'title' => 'required|string',
-            'type' => 'required|string',
-            'is_active' => 'boolean',
-            'content' => 'required'
-        ]);
-        $data['content'] = json_decode($data['content'], true);
-        $block->update($data);
+        $this->adminService->updateBlock($block, $updateBlockRequest->validated());
         return to_route('admin.dashboard');
     }
 
-    function toggleStatus(UiBlock $uiBlock)
+    function toggleStatus(ToggleStatusRequest $toggleStatusRequest, UiBlock $uiBlock)
     {
-        $uiBlock->update([
-            'is_active' => request('is_active')
-        ]);
+        $this->adminService->toggleStatus($uiBlock, $toggleStatusRequest->validated()['is_active']);
         return to_route('admin.dashboard');
     }
 
     function deleteBlock(UiBlock $uiBlock)
     {
-        $uiBlock->delete();
+        $this->adminService->deleteBlock($uiBlock);
         return to_route('admin.dashboard');
     }
 
-    function reorderBlock(UiBlock $uiBlock)
+    function reorderBlock(ReorderBlockRequest $reorderBlockRequest, UiBlock $uiBlock)
     {
-        $direction = request('direction');
-
-        if ($direction === 'up') {
-            $previousBlock = UiBlock::where('order', '<', $uiBlock->order)
-                ->orderBy('order', 'desc')
-                ->first();
-
-            if ($previousBlock) {
-                $tempOrder = $uiBlock->order;
-                $uiBlock->update(['order' => $previousBlock->order]);
-                $previousBlock->update(['order' => $tempOrder]);
-            }
-        } elseif ($direction === 'down') {
-            $nextBlock = UiBlock::where('order', '>', $uiBlock->order)
-                ->orderBy('order', 'asc')
-                ->first();
-
-            if ($nextBlock) {
-                $tempOrder = $uiBlock->order;
-                $uiBlock->update(['order' => $nextBlock->order]);
-                $nextBlock->update(['order' => $tempOrder]);
-            }
-        }
-
-        return redirect()->route('admin.dashboard')->with('success', 'Block order updated successfully');
+        $success = $this->adminService->reorderBlock($uiBlock, $reorderBlockRequest->validated()['direction']);
+        
+        $message = $success ? 'Block order updated successfully' : 'Unable to reorder block';
+        return redirect()->route('admin.dashboard')->with('success', $message);
     }
 }
